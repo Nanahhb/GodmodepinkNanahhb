@@ -1,0 +1,178 @@
+
+-- NANAHHB | DELTA LUA | REBUILT
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local old = playerGui:FindFirstChild("Nanahhb")
+if old then old:Destroy() end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "Nanahhb"
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999
+gui.Parent = playerGui
+
+local function round(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius)
+    c.Parent = obj
+end
+
+local function outline(obj)
+    local s = Instance.new("UIStroke")
+    s.Color = Color3.fromRGB(255, 197, 120)
+    s.Thickness = 2
+    s.Parent = obj
+end
+
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.fromOffset(280, 275)
+main.Position = UDim2.new(0.5, -140, 0.5, -137)
+main.BackgroundColor3 = Color3.fromRGB(255, 248, 229)
+main.Parent = gui
+round(main, 18)
+outline(main)
+
+local title = Instance.new("TextLabel")
+title.Name = "Header"
+title.Size = UDim2.new(1, -16, 0, 42)
+title.Position = UDim2.fromOffset(8, 5)
+title.BackgroundTransparency = 1
+title.Text = "👑 NANAHHB ✨"
+title.TextColor3 = Color3.fromRGB(130, 84, 43)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, -20, 0, 28)
+status.Position = UDim2.fromOffset(10, 238)
+status.BackgroundTransparency = 1
+status.Text = "✨ Ready!"
+status.TextColor3 = Color3.fromRGB(130, 84, 43)
+status.TextScaled = true
+status.Parent = main
+
+local function makeButton(name, text, y)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Size = UDim2.new(1, -24, 0, 40)
+    b.Position = UDim2.fromOffset(12, y)
+    b.BackgroundColor3 = Color3.fromRGB(255, 231, 183)
+    b.TextColor3 = Color3.fromRGB(110, 73, 42)
+    b.Text = text
+    b.TextScaled = true
+    b.Font = Enum.Font.GothamBold
+    b.Parent = main
+    round(b, 11)
+    return b
+end
+
+local god = makeButton("GodMode", "🛡 GODMODE", 52)
+local refill = makeButton("Refill", "🧪 REFILL HEALTH", 99)
+local hide = makeButton("Hide", "🐰 HIDE MENU", 146)
+
+local floating = Instance.new("TextButton")
+floating.Name = "FloatingMenu"
+floating.Size = UDim2.fromOffset(112, 44)
+floating.Position = UDim2.new(0, 20, 0.5, 130)
+floating.BackgroundColor3 = Color3.fromRGB(255, 224, 157)
+floating.TextColor3 = Color3.fromRGB(110, 73, 42)
+floating.Text = "🐾 MENU"
+floating.TextScaled = true
+floating.Font = Enum.Font.GothamBold
+floating.Active = true
+floating.Parent = gui
+round(floating, 13)
+outline(floating)
+
+-- Drag helper for header and floating button
+local function makeDraggable(target, handle, onTap)
+    local dragging = false
+    local moved = false
+    local startPos
+    local startInput
+    local startObjectPos
+    local activeTouch
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            moved = false
+            startInput = input.Position
+            startObjectPos = target.Position
+            activeTouch = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if not dragging then return end
+
+        local isMouseMove =
+            input.UserInputType == Enum.UserInputType.MouseMovement
+        local isTouchMove =
+            input.UserInputType == Enum.UserInputType.Touch
+            and activeTouch ~= nil
+
+        if isMouseMove or isTouchMove then
+            local delta = input.Position - startInput
+
+            if math.abs(delta.X) > 6 or math.abs(delta.Y) > 6 then
+                moved = true
+            end
+
+            if moved then
+                target.Position = UDim2.new(
+                    startObjectPos.X.Scale,
+                    startObjectPos.X.Offset + delta.X,
+                    startObjectPos.Y.Scale,
+                    startObjectPos.Y.Offset + delta.Y
+                )
+            end
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if not dragging then return end
+
+        if input == activeTouch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+            if not moved and onTap then onTap() end
+            activeTouch = nil
+        end
+    end)
+end
+
+makeDraggable(main, title)
+
+makeDraggable(floating, floating, function()
+    main.Visible = not main.Visible
+end)
+
+hide.Activated:Connect(function()
+    main.Visible = false
+end)
+
+god.Activated:Connect(function()
+    status.Text = "⚠️ GodMode needs game-side support"
+end)
+
+refill.Activated:Connect(function()
+    local character = player.Character
+    local humanoid = character
+        and character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid.Health = humanoid.MaxHealth
+        status.Text = "🧪 Refill requested"
+    else
+        status.Text = "⚠️ Character not ready"
+    end
+end)
+
+print("NANAHHB loaded")
