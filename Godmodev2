@@ -1,0 +1,209 @@
+
+-- NANAHHB | DELTA LUA
+-- Fixed MENU ON/OFF + Humanoid monitor
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local pg = player:WaitForChild("PlayerGui")
+
+local old = pg:FindFirstChild("Nanahhb")
+if old then old:Destroy() end
+
+local GOLD = Color3.fromRGB(255, 211, 91)
+local CREAM = Color3.fromRGB(255, 248, 224)
+local PINK = Color3.fromRGB(255, 177, 204)
+local BROWN = Color3.fromRGB(119, 69, 34)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "Nanahhb"
+gui.ResetOnSpawn = false
+gui.Parent = pg
+
+local function corner(obj, radius)
+    Instance.new("UICorner", obj).CornerRadius =
+        UDim.new(0, radius)
+end
+
+local function makeButton(parent, text, size, pos, color)
+    local b = Instance.new("TextButton")
+    b.Size = size
+    b.Position = pos
+    b.BackgroundColor3 = color
+    b.TextColor3 = BROWN
+    b.Text = text
+    b.TextScaled = true
+    b.Font = Enum.Font.GothamBold
+    b.Parent = parent
+    corner(b, 10)
+    return b
+end
+
+local main = Instance.new("Frame")
+main.Name = "MainPanel"
+main.Size = UDim2.fromOffset(360, 300)
+main.Position = UDim2.new(0.5, -180, 0.5, -150)
+main.BackgroundColor3 = CREAM
+main.Active = true
+main.Parent = gui
+corner(main, 18)
+
+local border = Instance.new("UIStroke", main)
+border.Color = GOLD
+border.Thickness = 4
+
+local header = Instance.new("TextLabel")
+header.Size = UDim2.new(1, -24, 0, 60)
+header.Position = UDim2.fromOffset(12, 12)
+header.BackgroundColor3 = GOLD
+header.Text = "👑 NANAHHB ✨"
+header.TextColor3 = BROWN
+header.TextScaled = true
+header.Font = Enum.Font.GothamBlack
+header.Parent = main
+corner(header, 12)
+
+local hp = Instance.new("TextLabel")
+hp.Size = UDim2.new(1, -20, 0, 25)
+hp.Position = UDim2.fromOffset(10, 78)
+hp.BackgroundTransparency = 1
+hp.TextColor3 = BROWN
+hp.TextScaled = true
+hp.Font = Enum.Font.GothamBold
+hp.Text = "HUMANOID: WAITING..."
+hp.Parent = main
+
+local god = makeButton(main, "💗 GODMODE: OFF",
+    UDim2.new(.46, 0, 0, 50),
+    UDim2.new(.04, 0, 0, 112), GOLD)
+
+local hide = makeButton(main, "🐰 HIDE MENU",
+    UDim2.new(.46, 0, 0, 50),
+    UDim2.new(.50, 0, 0, 112), PINK)
+
+local teleport = makeButton(main, "☁️ TELEPORT",
+    UDim2.new(.46, 0, 0, 50),
+    UDim2.new(.04, 0, 0, 172), GOLD)
+
+local refill = makeButton(main, "🧪 REFILL HEALTH",
+    UDim2.new(.46, 0, 0, 50),
+    UDim2.new(.50, 0, 0, 172), GOLD)
+
+local menu = makeButton(gui, "🐾 MENU",
+    UDim2.fromOffset(120, 46),
+    UDim2.new(0, 18, .72, 0), GOLD)
+
+-- MENU ON/OFF: menu nổi luôn tồn tại
+hide.Activated:Connect(function()
+    main.Visible = false
+end)
+
+menu.Activated:Connect(function()
+    main.Visible = not main.Visible
+end)
+
+-- Humanoid monitor
+local godEnabled = false
+local healthConnection
+local currentHumanoid
+
+local function monitorHumanoid()
+    if healthConnection then
+        healthConnection:Disconnect()
+        healthConnection = nil
+    end
+
+    local character = player.Character
+    currentHumanoid = character and
+        character:FindFirstChildOfClass("Humanoid")
+
+    if not currentHumanoid then
+        hp.Text = "HUMANOID: WAITING..."
+        return
+    end
+
+    local hum = currentHumanoid
+
+    local function updateHealth()
+        if hum.Parent then
+            hp.Text = string.format(
+                "HUMANOID: %.0f / %.0f HP",
+                hum.Health, hum.MaxHealth
+            )
+        end
+    end
+
+    updateHealth()
+    healthConnection =
+        hum.HealthChanged:Connect(updateHealth)
+end
+
+god.Activated:Connect(function()
+    godEnabled = not godEnabled
+    god.Text = godEnabled and
+        "💗 GODMODE: ON" or "💗 GODMODE: OFF"
+    god.BackgroundColor3 = godEnabled and
+        Color3.fromRGB(255, 190, 112) or GOLD
+
+    monitorHumanoid()
+end)
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    monitorHumanoid()
+end)
+
+teleport.Activated:Connect(function()
+    teleport.Text = "TELEPORT: DEMO"
+    task.delay(1, function()
+        if teleport.Parent then
+            teleport.Text = "☁️ TELEPORT"
+        end
+    end)
+end)
+
+refill.Activated:Connect(function()
+    refill.Text = "HEALTH: MONITOR ONLY"
+    task.delay(1, function()
+        if refill.Parent then
+            refill.Text = "🧪 REFILL HEALTH"
+        end
+    end)
+end)
+
+monitorHumanoid()
+
+-- Kéo bảng chính bằng thanh tiêu đề
+local dragging = false
+local dragStart, startPos
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseMovement
+    ) then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+print("NANAHHB loaded - MENU fixed!")
